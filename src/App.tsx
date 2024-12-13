@@ -8,11 +8,12 @@ import { List } from '@alfalab/core-components/list';
 import { SelectMobile } from '@alfalab/core-components/select/mobile';
 import { Switch } from '@alfalab/core-components/switch';
 import { Typography } from '@alfalab/core-components/typography';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import longread from './assets/longread.jpg';
 import rubIcon from './assets/rubIcon.png';
 import sber from './assets/sber.png';
+import { LS, LSKeys } from './ls';
 import { appSt } from './style.css';
 import { ThxLayout } from './thx/ThxLayout';
 import { sendDataToGA } from './utils/events';
@@ -40,6 +41,12 @@ export const App = () => {
   const [reqType, setReqTpe] = useState(7);
   const [safeOption, setSafeOption] = useState(100);
 
+  useEffect(() => {
+    if (!LS.getItem(LSKeys.UserId, null)) {
+      LS.setItem(LSKeys.UserId, Date.now());
+    }
+  }, []);
+
   const percentageLoss = reqType === 7 ? 0.05 : 0.2;
   const sum = price * count;
   const percantageSafe = safeOption / 100;
@@ -56,10 +63,11 @@ export const App = () => {
     sendDataToGA({
       quantity: count,
       price,
-      term: reqType,
-      percent: safeOption,
+      term: selectedEns ? reqType : 'Nan',
+      percent: selectedEns ? safeOption : 'Nan',
       percent_down: 'Nan',
-      cost: safeValue,
+      cost: selectedEns ? safeValue : 0,
+      id: LS.getItem(LSKeys.UserId, null) ?? 0,
     }).then(() => {
       setThx(true);
       setLoading(false);
@@ -205,11 +213,9 @@ export const App = () => {
                 <Typography.TitleResponsive font="system" tag="h2" view="xsmall" weight="bold">
                   Итого {total.toLocaleString('ru')} ₽
                 </Typography.TitleResponsive>
-                {selectedEns && (
-                  <Typography.Text color="secondary-inverted" tag="p" view="primary-medium" defaultMargins={false}>
-                    Включая защиту
-                  </Typography.Text>
-                )}
+                <Typography.Text color="secondary-inverted" tag="p" view="primary-medium" defaultMargins={false}>
+                  {selectedEns ? 'Включая защиту' : 'Без защиты'}
+                </Typography.Text>
               </div>
               <CDNIcon name="glyph_chevron-right_m" />
             </div>
